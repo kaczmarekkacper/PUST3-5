@@ -262,12 +262,13 @@ if saving
 end
 
 %% Charakterystyki statyczne
-
+load('answers.mat');
 G1 = 0:55; G1 = G1';
 G2 = 0:55; G2 = G2';
 Us = zeros(size(G1,1)*size(G2,1), 2);
 Ys = zeros(size(G1,1)*size(G2,1), 2);
 isValid = true(size(G1,1)*size(G2,1));
+MakeJump(0, 0);
 i = 1;
 for g1 = G1'
     for g2 = G2'
