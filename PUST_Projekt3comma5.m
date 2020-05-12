@@ -10,10 +10,10 @@ T3pp = 0;
 
 saving = 1;
 
-%% 1. Sprawdzic mozliwosc sterowania i pomiaru w komunikacji ze stanowiskiem â€“ w szczegÃ³lnosci
-% sygnaÅ‚Ã³w sterujacych G1, G2, oraz pomiaru T1, T3. Okreslic wartosci temperatur
+%% 1. Sprawdzic mozliwosc sterowania i pomiaru w komunikacji ze stanowiskiem – w szczególnosci
+% sygna³ów sterujacych G1, G2, oraz pomiaru T1, T3. Okreslic wartosci temperatur
 %w punkcie pracy (punkt pracy: sterowanie G1 = 25 + F, G2 = 30 + F, T1
-% oraz T3 do zmierzenia, F oznacza numer zespoÅ‚u).
+% oraz T3 do zmierzenia, F oznacza numer zespo³u).
 mkdir('results/1');
 [y, u] = MakeJump(G1pp, G2pp);
 subplot(2,1,1);
@@ -24,11 +24,11 @@ end
 T1pp = mean(y(end-10:end, 1));
 T3pp = mean(y(end-10:end, 2));
 
-%% 2. Wyznaczyc odpowiedzi skokowe dla rÃ³znych zmian sygnaÅ‚Ã³w sterujacych G1 i G2
-% rozpoczynajac z punktu pracy â€“ pomiar nalezy wykonac zarÃ³wno na T1 jak i T3. Dla
-% kazdego toru narysowac przebiegi otrzymane dla rÃ³znych zmian sterowania na jednym
-% rysunku. Czy wÅ‚asciwosci statyczne obiektu mozna okreslic jako (w przyblizeniu)
-% liniowe? Jesli tak â€“ wyznaczyc wzmocnienie statyczne dla kazdego toru. Narysowac
+%% 2. Wyznaczyc odpowiedzi skokowe dla róznych zmian sygna³ów sterujacych G1 i G2
+% rozpoczynajac z punktu pracy – pomiar nalezy wykonac zarówno na T1 jak i T3. Dla
+% kazdego toru narysowac przebiegi otrzymane dla róznych zmian sterowania na jednym
+% rysunku. Czy w³asciwosci statyczne obiektu mozna okreslic jako (w przyblizeniu)
+% liniowe? Jesli tak – wyznaczyc wzmocnienie statyczne dla kazdego toru. Narysowac
 % charakterystyki statyczne procesu T1(G1,G2), T3(G1,G2).
 mkdir('results/2');
 %% G1+5
@@ -293,12 +293,12 @@ save('chstat.mat');
 
 
 %% 3. Przygotowac stosowna liczbe odpowiedzi skokowych do implementacji regulatora DMC
-% 2 Ã— 2 i wykonac ich aproksymacje uzywajac w tym celu czÅ‚onu inercyjnego drugiego
-% rzedu z opÃ³znieniem (szczegÃ³Å‚y w opisie znajdujacym sie na stronie przedmiotu). W
-% celu doboru parametrÃ³w modelu wykorzystac optymalizacje. Uzasadnic wybÃ³r parametrÃ³w
-% optymalizacji. Zamiescic rysunki porÃ³wnujace odpowiedzi skokowe (tj. w
+% 2 × 2 i wykonac ich aproksymacje uzywajac w tym celu cz³onu inercyjnego drugiego
+% rzedu z opóznieniem (szczegó³y w opisie znajdujacym sie na stronie przedmiotu). W
+% celu doboru parametrów modelu wykorzystac optymalizacje. Uzasadnic wybór parametrów
+% optymalizacji. Zamiescic rysunki porównujace odpowiedzi skokowe (tj. w
 % postaci nadajacej sie do uzycia jako model DMC) oryginalne i po aproksymacji (uzyc
-% tej samej skali dla wszystkich rysunkÃ³w).
+% tej samej skali dla wszystkich rysunków).
 load('answers.mat');
 mkdir('results/3');
 %T1 do G1
@@ -384,3 +384,37 @@ legend("skok", 'interpreter', 'latex');
 if saving
    matlab2tikz('results/3/DMCT3G2.tex'); 
 end
+
+%% Wyznaczanie modeli do odpowiedzi skokowych 
+
+S = [s11,s12,s21,s22];
+indexes = ['11','12','13','14']; 
+Smodel = zeros(151,4); 
+for i =  1:4
+    params = getParams(S(1:end,i),indexes(i)) ;
+    Gs = tf(params(1),[params(3)*params(4),(params(3)+params(4)),1],'OutputDelay',params(2));
+    Gz(i) = c2d(Gs,1) ;
+    Smodel(:,i) = step(1:k,Gz); 
+    Smodel(100:end,i) = Smodel(100,i); 
+    e = (S(:,i)-Smodel(:,i))'*(S(:,i)-Smodel(:,i));
+    figure
+    stairs(Smodel(:,i)) 
+    hold on
+    plot(S(:,i))
+    axis([0 k -0.5 3.5])
+    title(sprintf("Aproksymacja odpowiedzi skokowej $s_{%s}$ $E=%.2f$",indexes(i),e),'interpreter','latex');
+    xlabel('Czas','interpreter','latex') ;
+    ylabel("Wyjscie obiektu i modelu",'interpreter','latex');
+    legend('Model','Obiekt','interpreter','latex','Location','southeast');
+    matlab2tikz(sprintf('results/3/Model3_s%s.tex',indexes(i)'))
+    writematrix(s22model,sprintf('results/3/s%s_model.txt',indexes(i)))
+end
+
+
+%% 4. DMC 2x2 
+
+%Odczyt odpowiedzi skokowych modelu z plików
+readmatrix(s11model,'results/3/s11model.txt')
+readmatrix(s12model,'results/3/s12model.txt')
+readmatrix(s21model,'results/3/s21model.txt')
+readmatrix(s22model,'results/3/s22model.txt')
