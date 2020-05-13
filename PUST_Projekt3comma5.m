@@ -211,24 +211,22 @@ subplot(2,1,1);
 plot(0:150, T1pp*ones(151,1));
 title("Odpowiedzi skokowe $T_1$ dla $G_2$", 'interpreter', 'latex');
 hold on;
-plot(0:150, yG2plus5(:,1));
 plot(0:150, yG2minus5(:,1));
 plot(0:150, yG2minus10(:,1));
 plot(0:150, yG2minus20(:,1));
 xlabel("$t[s]$", 'interpreter', 'latex');
 ylabel("$T[\circ C]$", 'interpreter', 'latex');
-legend("$T_{1pp}$", "$G_{2pp}+5$", "$G_{2pp}-5$", "$G_{2pp}-10$", "$G_{2pp}-20$", 'interpreter', 'latex', 'location', 'southwest');
+legend("$T_{1pp}$", "$G_{2pp}-5$", "$G_{2pp}-10$", "$G_{2pp}-20$", 'interpreter', 'latex', 'location', 'southwest');
 
 subplot(2,1,2);
 plot(0:150, G2pp*ones(151,1));
 hold on;
-plot(0:150, uG2plus5(:,2));
 plot(0:150, uG2minus5(:,2));
 plot(0:150, uG2minus10(:,2));
 plot(0:150, uG2minus20(:,2));
 xlabel("$t[s]$", 'interpreter', 'latex');
 ylabel("$\%$", 'interpreter', 'latex');
-legend("$G_{2pp}$", "$G_{2pp}+5$", "$G_{2pp}-5$", "$G_{2pp}-10$", "$G_{2pp}-20$", 'interpreter', 'latex');
+legend("$G_{2pp}$", "$G_{2pp}-5$", "$G_{2pp}-10$", "$G_{2pp}-20$", 'interpreter', 'latex');
 
 if saving
     matlab2tikz('results/2/T1doG2.tex');
@@ -262,16 +260,17 @@ if saving
 end
 
 %% Charakterystyki statyczne
-
-G1 = 0:55; G1 = G1';
-G2 = 0:55; G2 = G2';
+load('answers.mat');
+G1 = 0:3:50; G1 = G1';
+G2 = 0:3:50; G2 = G2';
 Us = zeros(size(G1,1)*size(G2,1), 2);
 Ys = zeros(size(G1,1)*size(G2,1), 2);
-isValid = true(size(G1,1)*size(G2,1));
+isValid = true(size(G1,1)*size(G2,1), 1);
+MakeJump(0, 0);
 i = 1;
 for g1 = G1'
     for g2 = G2'
-        k = 30;
+        k = 100;
         [y, u] = MakeJump(g1, g2);
         close;
         exceeded = any(y>150, 'all');
@@ -280,16 +279,49 @@ for g1 = G1'
         isValid(i) = ~exceeded;
         i = i+1;
     end
-    k = 150;
     MakeJump(g1, 0);
 end
-G1 = Us(:,1)';
-G2 = Us(:,2)';
-T1 = Ys(:,1)';
-T3 = Ys(:,2)';
+G1 = Us(:,1);
+G2 = Us(:,2);
+T1 = Ys(:,1);
+T3 = Ys(:,2);
 chstat = table(G1, G2, T1, T3, isValid);
 
 save('chstat.mat');
+
+%% Rysowanie charakterystyki statycznej
+
+load('chstat.mat');
+
+[X,Y] = meshgrid(0:3:50);
+
+Z1 = zeros(size(X));
+Z3 = zeros(size(X));
+for i = 1:size(X,1)
+    for j = 1:size(Y,1)
+        if chstat.isValid( chstat.G1 == X(i,j) & chstat.G2 == Y(i,j))
+            Z1(i,j) = chstat.T1( chstat.G1 == X(i,j) & chstat.G2 == Y(i,j));
+            Z3(i,j) = chstat.T3( chstat.G1 == X(i,j) & chstat.G2 == Y(i,j));
+        else
+            Z1(i,j) = NaN;
+            Z3(i,j) = NaN;
+        end
+    end
+end
+
+figure;
+surf(X,Y,Z1);
+xlabel("$G_{1}$", 'interpreter', 'latex');
+ylabel("$G_{2}$", 'interpreter', 'latex');
+zlabel("$T_{1}$", 'interpreter', 'latex');
+title("Charakterystyka statyczna $T_{1}(G_{1},G_{2}$)", 'interpreter', 'latex');
+
+figure;
+surf(X,Y,Z3);
+xlabel("$G_{1}$", 'interpreter', 'latex');
+ylabel("$G_{2}$", 'interpreter', 'latex');
+zlabel("$T_{3}$", 'interpreter', 'latex');
+title("Charakterystyka statyczna $T_{3}(G_{1},G_{2}$)", 'interpreter', 'latex');
 
 
 %% 3. Przygotowac stosowna liczbe odpowiedzi skokowych do implementacji regulatora DMC
