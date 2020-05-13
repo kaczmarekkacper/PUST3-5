@@ -424,11 +424,11 @@ D = 110;
 N = 20;
 Nu = 5;
 lambda = 0.5;
-yzad = [90, 143];
-sim_time = 150;
+yzad = [T1pp - 20, T3pp - 10];
+sim_time = 100;
 u_prev = [G1pp; G2pp];
 
-% stabilizacja
+%stabilizacja
 MakeJump(G1pp, G2pp);
 close;
 % subplot(2,1,1);
@@ -443,24 +443,24 @@ close;
 
 [u, y] = DMC(s, D, N, Nu, lambda, yzad, sim_time, u_prev);
 
-E = sum(sum((ones(sim_time,2).*yzad - y).^2));
+E = sum(sum((ones(100,2).*yzad - y).^2));
 
 subplot(2,1,1);
 hold on
-plot([0:sim_time], ones(sim_time+1,2).*yzad, 'm' )
-titleN = sprintf("DMC $T_1^{zad}$ = %d $T_3^{zad}$ = %d",yzad(1), yzad(2));
-titleN = strrep(titleN,'.',',');
-title(titleN,'interpreter','latex')
+plot([0:sim_time], ones(sim_time,2).*yzad, 'm' )
+title(sprintf('DMC D=%d N=%d Nu=%d \\lambda = %.1f E = %g', D, N, Nu, lambda, E))
 xlabel("$t[s]$", 'interpreter', 'latex');
 ylabel("$T[\circ C]$", 'interpreter', 'latex');
-legend("$T_1$", "$T_3$", "$T_1^{zad}$", "$T_3^{zad}$", 'interpreter', 'latex', 'location', 'northeast');
+legend("$T_1$", "$T_3$", "$T_1zad$", "$T_3zad$", 'interpreter', 'latex', 'location', 'northeast');
 subplot(2,1,2);
 xlabel("$t[s]$", 'interpreter', 'latex');
 ylabel("$\%$", 'interpreter', 'latex');
 legend("$G_1$", "$G_2$", 'interpreter', 'latex', 'location', 'northeast');
 
+
 mean(y(end-30:end, 1))
 mean(y(end-30:end, 2))
 if saving
-    matlab2tikz(sprintf('results/4/DMC_%d_%d.tex',yzad(1), yzad(2)));
+    matlab2tikz(sprintf('results/4/DMC_D_%d_N_%d_Nu_%d_l_%g_.tex',D,N,Nu,lambda));
 end
+

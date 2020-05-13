@@ -11,6 +11,4 @@ Gz = c2d(G,1);
 modelResponse = step(1:length(sObject),Gz); 
 
 E = (sObject-modelResponse)'*(sObject-modelResponse); 
-
-
 end
